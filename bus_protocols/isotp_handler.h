@@ -5,10 +5,10 @@
 #include <QDebug>
 #include <QTimer>
 #include "can_structs.h"
-#include "mainwindow.h"
-#include "canframemodel.h"
 #include "isotp_message.h"
 #include "canfilter.h"
+
+class CANConnection;
 
 class ISOTP_HANDLER : public QObject
 {

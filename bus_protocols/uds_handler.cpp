@@ -173,7 +173,11 @@ UDS_HANDLER::UDS_HANDLER()
 {
     isReceiving = false;
     useExtendedAddressing = false;
-    modelFrames = MainWindow::getReference()->getCANFrameModel()->getListReference();
+    MainWindow *mw = MainWindow::getReference();
+    if (mw && mw->getCANFrameModel())
+        modelFrames = mw->getCANFrameModel()->getListReference();
+    else
+        modelFrames = nullptr;
     isoHandler = new ISOTP_HANDLER();
 }
 

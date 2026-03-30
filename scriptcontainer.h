@@ -3,6 +3,7 @@
 
 #include "can_structs.h"
 #include "canfilter.h"
+#include "mainwindow.h"
 #include "bus_protocols/isotp_handler.h"
 #include "bus_protocols/isotp_message.h"
 #include "bus_protocols/uds_handler.h"

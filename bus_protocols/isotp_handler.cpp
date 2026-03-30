@@ -1,4 +1,5 @@
 #include "isotp_handler.h"
+#include "mainwindow.h"
 #include "connections/canconmanager.h"
 
 ISOTP_HANDLER::ISOTP_HANDLER()
@@ -11,7 +12,11 @@ ISOTP_HANDLER::ISOTP_HANDLER()
     lastSenderBus = 0;
     lastSenderID = 0;
 
-    modelFrames = MainWindow::getReference()->getCANFrameModel()->getListReference();
+    MainWindow *mw = MainWindow::getReference();
+    if (mw && mw->getCANFrameModel())
+        modelFrames = mw->getCANFrameModel()->getListReference();
+    else
+        modelFrames = nullptr;
 
     connect(&frameTimer, SIGNAL(timeout()), this, SLOT(frameTimerTick()));
 }
@@ -105,6 +110,8 @@ void ISOTP_HANDLER::sendISOTPFrame(int bus, int ID, QByteArray data)
 //remember, negative numbers are special -1 = all frames deleted, -2 = totally new set of frames.
 void ISOTP_HANDLER::updatedFrames(int numFrames)
 {
+    if (!modelFrames) return;
+
     if (numFrames == -1) //all frames deleted. Kill the display
     {
         messageBuffer.clear();

@@ -20,6 +20,7 @@ QMAKE_INFO_PLIST = Info.plist.template
 ICON = icons/SavvyIcon.icns
 
 SOURCES += main.cpp\
+    cli/clihandler.cpp \
     canbridgewindow.cpp \
     connections/canserver.cpp \
     connections/lawicel_serial.cpp \
@@ -102,6 +103,7 @@ SOURCES += main.cpp\
 
 HEADERS  += mainwindow.h \
     can_structs.h \
+    cli/clihandler.h \
     canbridgewindow.h \
     canframemodel.h \
     connections/canserver.h \
