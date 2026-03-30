@@ -17,6 +17,8 @@ class CLIHandler : public QObject
 public:
     struct Settings {
         QString port;
+        QString connectionType = "lawicel";
+        QString driver;
         int busSpeed = 500000;
         int serialSpeed = 115200;
         bool listenOnly = false;
@@ -68,6 +70,7 @@ private:
     void sendUDSFrames();
     bool saveToFile();
     CANFrame parseFrameString(const QString &frameStr);
+    CANCon::type resolveConnectionType(const QString &typeStr);
 
     Settings mSettings;
     CANConnection *mConnection = nullptr;

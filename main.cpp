@@ -74,9 +74,11 @@ static int runCli(int argc, char *argv[])
 
     // Connection options
     parser.addOption(QCommandLineOption(QStringList() << "cli", "Run in CLI mode (no GUI)"));
-    parser.addOption(QCommandLineOption(QStringList() << "p" << "port", "Serial port for LAWicel device", "port"));
+    parser.addOption(QCommandLineOption(QStringList() << "t" << "type", "Connection type: lawicel (default), serialbus, gvret, kayak, mqtt, canserver", "type", "lawicel"));
+    parser.addOption(QCommandLineOption(QStringList() << "d" << "driver", "SerialBus driver/plugin (e.g. socketcan, peakcan, virtualcan). Required for --type serialbus", "driver"));
+    parser.addOption(QCommandLineOption(QStringList() << "p" << "port", "Port or device name (e.g. COM3, can0, usb0)", "port"));
     parser.addOption(QCommandLineOption(QStringList() << "s" << "speed", "CAN bus speed in bps (default: 500000)", "speed", "500000"));
-    parser.addOption(QCommandLineOption(QStringList() << "serial-speed", "Serial baud rate (default: 115200)", "baud", "115200"));
+    parser.addOption(QCommandLineOption(QStringList() << "serial-speed", "Serial baud rate for LAWICEL (default: 115200)", "baud", "115200"));
     parser.addOption(QCommandLineOption(QStringList() << "send", "Send a CAN frame (ID#HEXDATA)", "frame"));
     parser.addOption(QCommandLineOption(QStringList() << "o" << "output", "Save captured frames to file", "file"));
     parser.addOption(QCommandLineOption(QStringList() << "f" << "format", "Output format: csv, crtd, candump (default: csv)", "format", "csv"));
@@ -102,12 +104,22 @@ static int runCli(int argc, char *argv[])
     if (!parser.isSet("port") && !parser.isSet("playback")) {
         fprintf(stderr, "Error: --port or --playback is required in CLI mode\n");
         fprintf(stderr, "Usage: SavvyCAN --cli --port COM3 --speed 500000\n");
-        fprintf(stderr, "       SavvyCAN --cli --port COM3 --playback capture.csv\n");
+        fprintf(stderr, "       SavvyCAN --cli --type serialbus --driver socketcan --port can0\n");
+        fprintf(stderr, "       SavvyCAN --cli --playback capture.csv\n");
+        return 1;
+    }
+
+    QString connType = parser.value("type").toLower();
+    if (connType == "serialbus" && !parser.isSet("driver")) {
+        fprintf(stderr, "Error: --driver is required when --type serialbus\n");
+        fprintf(stderr, "  e.g. --type serialbus --driver socketcan --port can0\n");
         return 1;
     }
 
     CLIHandler::Settings settings;
     settings.port = parser.value("port");
+    settings.connectionType = connType;
+    settings.driver = parser.value("driver");
     settings.busSpeed = parser.value("speed").toInt();
     settings.serialSpeed = parser.value("serial-speed").toInt();
     settings.listenOnly = parser.isSet("listen-only");

@@ -46,11 +46,19 @@ bool CLIHandler::start()
 
     // Create connection if a port is specified
     if (!mSettings.port.isEmpty()) {
-        mConnection = CanConFactory::create(CANCon::LAWICEL, mSettings.port, "",
+        CANCon::type connType = resolveConnectionType(mSettings.connectionType);
+        if (connType == CANCon::NONE) {
+            fprintf(stderr, "Error: Unknown connection type '%s'\n",
+                    qPrintable(mSettings.connectionType));
+            fprintf(stderr, "Valid types: lawicel, serialbus, gvret, kayak, mqtt, canserver\n");
+            return false;
+        }
+
+        mConnection = CanConFactory::create(connType, mSettings.port, mSettings.driver,
                                              mSettings.serialSpeed, mSettings.busSpeed);
         if (!mConnection) {
-            fprintf(stderr, "Error: Failed to create LAWicel connection on %s\n",
-                    qPrintable(mSettings.port));
+            fprintf(stderr, "Error: Failed to create %s connection on %s\n",
+                    qPrintable(mSettings.connectionType), qPrintable(mSettings.port));
             return false;
         }
 
@@ -74,8 +82,11 @@ bool CLIHandler::start()
         mConnection->start();
         mConnection->setBusSettings(0, bus);
 
-        fprintf(stdout, "Connecting to LAWicel device on %s at %d bps...\n",
-                qPrintable(mSettings.port), mSettings.busSpeed);
+        fprintf(stdout, "Connecting via %s on %s at %d bps...\n",
+                qPrintable(mSettings.connectionType), qPrintable(mSettings.port), mSettings.busSpeed);
+        if (!mSettings.driver.isEmpty()) {
+            fprintf(stdout, "Driver: %s\n", qPrintable(mSettings.driver));
+        }
         fflush(stdout);
 
         if (mSettings.listenOnly) {
@@ -554,6 +565,17 @@ bool CLIHandler::saveToFile()
     fflush(stdout);
 
     return result;
+}
+
+CANCon::type CLIHandler::resolveConnectionType(const QString &typeStr)
+{
+    if (typeStr == "lawicel")    return CANCon::LAWICEL;
+    if (typeStr == "serialbus")  return CANCon::SERIALBUS;
+    if (typeStr == "gvret")      return CANCon::GVRET_SERIAL;
+    if (typeStr == "kayak")      return CANCon::KAYAK;
+    if (typeStr == "mqtt")       return CANCon::MQTT;
+    if (typeStr == "canserver")  return CANCon::CANSERVER;
+    return CANCon::NONE;
 }
 
 CANFrame CLIHandler::parseFrameString(const QString &frameStr)
