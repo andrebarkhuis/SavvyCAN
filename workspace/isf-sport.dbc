@@ -1,0 +1,71 @@
+VERSION ""
+
+
+NS_ :
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+
+BS_:
+
+BU_:
+
+
+BO_ 1437 DRIVE_MODE_SWITCH: 4 Vector__XXX
+ SG_ SPORT_ON : 14|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ SNOW_ON : 13|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ MODE_BUTTON_PRESS : 7|1@1+ (1,0) [0|1] "" Vector__XXX
+
+BO_ 1490 SNOW_MODE_ECHO: 8 Vector__XXX
+ SG_ SNOW_ON : 12|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ MODE_BUTTON_PRESS : 7|1@1+ (1,0) [0|1] "" Vector__XXX
+
+BO_ 1411 MODE_SWITCH_INPUT: 8 Vector__XXX
+ SG_ BUTTON_PRESSED : 7|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ BUTTON_ID : 20|2@1+ (1,0) [0|3] "" Vector__XXX
+
+BO_ 1425 TRAC_SWITCH: 8 Vector__XXX
+ SG_ TRAC_OFF : 45|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ TRAC_BUTTON_PRESS : 7|1@1+ (1,0) [0|1] "" Vector__XXX
+
+BO_ 1177 SWITCH_EVENTS: 8 Vector__XXX
+ SG_ SPORT_PRESS_PULSE : 18|2@1+ (1,0) [0|3] "" Vector__XXX
+
+
+
+CM_ BO_ 1437 "Lexus IS F 2UR-GSE, ID 0x59D, ~1 s period. Found 2026-10-21 with ignition on, engine off. Normal = 25 04 00 00, Sport = 25 44 00 00, Snow = 25 24 00 00, press = A5 xx 00 00 for one frame.";
+CM_ SG_ 1437 SPORT_ON "Latched SPORT mode state: byte 1 bit 6.";
+CM_ SG_ 1437 SNOW_ON "Latched SNOW mode state: byte 1 bit 5.";
+CM_ SG_ 1437 MODE_BUTTON_PRESS "Momentary: byte 0 bit 7 set for one frame on each SPORT or SNOW press.";
+CM_ BO_ 1490 "ID 0x5D2, ~1.1 s period. Byte 1 bit 4 follows SNOW only (not SPORT); likely a consumer ECU echo. Byte 0 bit 7 pulses on a press.";
+CM_ BO_ 1411 "ID 0x583, ~1 s period, changes ~0.1 s before 0x59D so probably the ECU that reads the switches. Byte 0 bit 7 pulses on any press; byte 2 = 0x20 for SPORT, 0x10 for SNOW during the press.";
+CM_ BO_ 1425 "ID 0x591, 300 ms period. Byte 5 bit 5 = TRAC OFF latched (18 normal, 38 off); byte 0 bit 7 pulses for one frame on each TRAC press (29 -> A9). Verified both ways 2026-10-21.";
+CM_ BO_ 1177 "ID 0x499, 500 ms period. Byte 2 goes E4 -> E8 for ~0.5 s on each SPORT press.";
+CM_ SG_ 1177 SPORT_PRESS_PULSE "Byte 2 bits 2-3: 1 = idle, 2 = button pressed.";
+VAL_ 1437 SPORT_ON 0 "NORMAL" 1 "SPORT" ;
+VAL_ 1437 SNOW_ON 0 "NORMAL" 1 "SNOW" ;
+VAL_ 1425 TRAC_OFF 0 "TRAC_ON" 1 "TRAC_OFF" ;
+VAL_ 1411 BUTTON_ID 0 "NONE" 1 "SNOW" 2 "SPORT" ;

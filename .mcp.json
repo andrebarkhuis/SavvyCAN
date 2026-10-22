@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "savvycan": {
+      "command": "C:\\Python314\\python.exe",
+      "args": ["C:\\projects\\SavvyCAN\\savvycan-mcp\\server.py"]
+    }
+  }
+}
