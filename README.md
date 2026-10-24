@@ -197,94 +197,15 @@ Options:
   --playback-loop <n>    Loop N times (-1=infinite, default: 1)
 ```
 
-## Dependencies
+## Dependencies and building
 
-Now this code does not depend on anything other than what is in the source tree or available
-from the Qt installer.
+See **[BUILD.md](BUILD.md)** for the full dependency list (Qt 5.15.2 modules, Visual Studio
+Build Tools, Linux packages, optional Python tooling) and the build steps for Windows x86,
+Windows x64 and Linux.
 
-Uses QCustomPlot available at:
-
-http://www.qcustomplot.com/
-
-However, this source code is integrated into the source for SavvyCAN and one isn't required
-to download it separately.
-
-This project requires 5.14.0 or higher because of a dependency on QtSerialBus and other new additions to Qt.
-
-NOTE: Qt6 currently lacks support for QtSerialBus and many other Qt sub-features. At this time you cannot
-use Qt6 to compile SavvyCAN. Support for Qt6 should be possible around Qt6.2.
-
-## Instructions for compiling
-
-This project requires Qt 5.14.0 or higher because of a dependency on QtSerialBus.
-
-NOTE: Qt6 currently lacks support for QtSerialBus. At this time you cannot use Qt6 to compile SavvyCAN.
-
-### Linux (Ubuntu/Debian)
-
-```sh
-sudo apt install qt5-default libqt5serialbus5-dev libqt5serialport5-dev qtdeclarative5-dev qttools5-dev
-
-git clone https://github.com/collin80/SavvyCAN.git
-cd SavvyCAN
-qmake
-make
-./SavvyCAN
-```
-
-On linux systems you can run `./install.sh` to create a desktop shortcut.
-
-### macOS
-
-```sh
-brew install qt@5
-
-git clone https://github.com/collin80/SavvyCAN.git
-cd SavvyCAN
-qmake
-make
-./SavvyCAN
-```
-
-### Windows (MSYS2/MinGW)
-
-1. Install MSYS2 from https://www.msys2.org/ or via winget:
-
-```
-winget install MSYS2.MSYS2
-```
-
-2. Open the **MSYS2 MINGW64** shell and install Qt5 and the toolchain:
-
-```sh
-pacman -Syu
-pacman -S mingw-w64-x86_64-qt5-base mingw-w64-x86_64-qt5-serialbus mingw-w64-x86_64-qt5-serialport mingw-w64-x86_64-qt5-declarative mingw-w64-x86_64-qt5-tools mingw-w64-x86_64-qt5-svg mingw-w64-x86_64-gcc mingw-w64-x86_64-make
-```
-
-3. Build (from the MSYS2 MINGW64 shell):
-
-```sh
-cd /e/Projects/SavvyCAN   # or wherever you cloned the repo
-qmake-qt5 SavvyCAN.pro
-mingw32-make -j$(nproc)
-```
-
-4. The compiled executable is at `release/SavvyCAN.exe`.
-
-5. To create a standalone folder with all required DLLs:
-
-```sh
-windeployqt-qt5 release/SavvyCAN.exe
-```
-
-This copies all Qt and MinGW runtime DLLs next to the exe so it can run without MSYS2 on the PATH.
-
-### Compiling in debug mode
-
-```sh
-qmake CONFIG+=debug
-make
-```
+Short version on Windows: install the two Qt 5.15.2 MSVC kits with aqtinstall, then run
+`build-win.cmd`. The release folders are `bin\x86\` and `bin\x64\`. `clean.cmd` removes all
+generated output for a clean build.
 
 ## What to do if your compile failed?
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SavvyCAN MCP server — lets an agent drive the SavvyCAN CLI over MCP.
+r"""SavvyCAN MCP server — lets an agent drive the SavvyCAN CLI over MCP.
 
 SCOPE CONTRACT (read before adding anything):
   This is a THIN wrapper over `SavvyCAN.exe --cli`. Every tool is one CLI
@@ -11,9 +11,15 @@ SCOPE CONTRACT (read before adding anything):
   - If this file passes ~250 lines or a tool grows business logic, stop and
     split it. The CLI is the product; this is glue.
 
-Tools: list_serial_ports, capture, send_frame, analyze_capture.
+Tools: list_serial_ports, capture, send_frame, connection_help, analyze_capture.
 Run:   python server.py         (stdio MCP server)
-Env:   SAVVYCAN_EXE overrides the exe path; default is the repo's deploy build.
+Builds: the repo has two Windows builds, bin\x86\SavvyCAN.exe and bin\x64\SavvyCAN.exe
+  (built by build-win.cmd). A vendor driver DLL can only be loaded by a process of the
+  same bitness, so the `arch` argument on capture/send_frame/connection_help picks the
+  build: x86 (default) for J2534 passthru adapters with 32-bit DLLs (XHorse / clone
+  MVCI) and for everything that has no vendor DLL (lawicel/slcan, gvret, socketcand,
+  mqtt, canserver); x64 only for adapters whose vendor DLL is 64-bit.
+Env:   SAVVYCAN_EXE overrides the exe path for every arch (testing only).
 """
 import os
 import re
@@ -28,10 +34,17 @@ from mcp.server.mcpserver import MCPServer
 # (not just prose). This is the one place the set is named; the source of truth for
 # full option detail is the connection_help tool, which returns the binary's own --help.
 Adapter = Literal["lawicel", "serialbus", "gvret", "kayak", "mqtt", "canserver"]
+# Which build to run; see the module docstring for when each applies.
+Arch = Literal["x86", "x64"]
 
 REPO = Path(__file__).resolve().parent.parent
-EXE = Path(os.environ.get("SAVVYCAN_EXE", REPO / "build-win32" / "deploy" / "SavvyCAN.exe"))
 TOGGLE_FINDER = REPO / "workspace" / "toggle_finder.py"
+
+
+def _exe(arch: Arch) -> Path:
+    """Path of the SavvyCAN build for `arch` (bin\\x86 or bin\\x64, from build-win.cmd)."""
+    override = os.environ.get("SAVVYCAN_EXE")
+    return Path(override) if override else REPO / "bin" / arch / "SavvyCAN.exe"
 
 mcp = MCPServer("savvycan")
 
@@ -39,12 +52,14 @@ mcp = MCPServer("savvycan")
 _FRAME = re.compile(r"^\((\d+\.\d+)\)\s+can(\d+)\s+(\S+)\s+\[(\d+)\]\s*([0-9A-Fa-f ]*?)\s*(TX)?\s*$")
 
 
-def _run(args, timeout, want_frames):
+def _run(args, timeout, want_frames, arch: Arch = "x86"):
     """Run the CLI once. Returns (frames, raw_nonframe_lines, rc). On timeout,
     returns whatever was printed so far (capture stops are normal, not errors)."""
-    if not EXE.exists():
-        raise FileNotFoundError(f"SavvyCAN.exe not found at {EXE}; set SAVVYCAN_EXE")
-    proc = subprocess.Popen([str(EXE), "--cli", *args],
+    exe = _exe(arch)
+    if not exe.exists():
+        raise FileNotFoundError(
+            f"SavvyCAN.exe not found at {exe}; run build-win.cmd {arch} (or set SAVVYCAN_EXE)")
+    proc = subprocess.Popen([str(exe), "--cli", *args],
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     try:
         out, _ = proc.communicate(timeout=timeout)
@@ -80,7 +95,7 @@ def list_serial_ports() -> dict:
 def capture(port: str, speed: int = 500000, adapter: Adapter = "lawicel",
             driver: str = "", serial_speed: int = 115200,
             count: int = 200, timeout_s: float = 20, listen_only: bool = True,
-            output_csv: str = "") -> dict:
+            output_csv: str = "", arch: Arch = "x86") -> dict:
     """Capture CAN frames from an adapter and return them.
 
     port: e.g. COM8, or can0 for socketcan. speed: bus bitrate, default 500000.
@@ -90,7 +105,10 @@ def capture(port: str, speed: int = 500000, adapter: Adapter = "lawicel",
     (default 115200). count: stop after this many frames. timeout_s: give up waiting
     after this long, returning whatever arrived. listen_only: never transmit (default
     true). output_csv: also save a SavvyCAN native CSV here (for analyze_capture).
-    Call connection_help for the binary's full option list.
+    arch: which build runs — x86 (default) works for every adapter without a vendor
+    DLL and for J2534/passthrucan devices with 32-bit DLLs (XHorse, clone MVCI);
+    use x64 only when the adapter's vendor DLL is 64-bit (the DLL and the process
+    must match). Call connection_help for the binary's full option list.
     """
     args = ["--type", adapter, "--port", port, "--speed", str(speed), "--count", str(count)]
     if driver:
@@ -101,29 +119,36 @@ def capture(port: str, speed: int = 500000, adapter: Adapter = "lawicel",
         args.append("--listen-only")
     if output_csv:
         args += ["--output", output_csv, "--format", "csv"]
-    frames, msgs, rc = _run(args, timeout_s, want_frames=True)
+    frames, msgs, rc = _run(args, timeout_s, want_frames=True, arch=arch)
     return {"count": len(frames), "frames": frames[:count], "messages": msgs,
-            "saved": output_csv or None}
+            "saved": output_csv or None, "arch": arch}
 
 
 @mcp.tool()
 def send_frame(port: str, frame: str, speed: int = 500000,
-               adapter: Adapter = "lawicel", driver: str = "") -> dict:
+               adapter: Adapter = "lawicel", driver: str = "", arch: Arch = "x86") -> dict:
     """Transmit one CAN frame. frame is 'ID#HEXDATA', e.g. '59D#25440000'.
-    adapter/driver as in capture. This writes to a live bus — the caller owns that."""
+    adapter/driver/arch as in capture. This writes to a live bus — the caller owns that."""
     args = ["--type", adapter, "--port", port, "--speed", str(speed), "--send", frame]
     if driver:
         args += ["--driver", driver]
-    _, msgs, rc = _run(args, timeout=10, want_frames=False)
-    return {"ok": rc == 0, "messages": msgs}
+    _, msgs, rc = _run(args, timeout=10, want_frames=False, arch=arch)
+    return {"ok": rc == 0, "messages": msgs, "arch": arch}
 
 
 @mcp.tool()
-def connection_help() -> dict:
+def connection_help(arch: Arch = "x86") -> dict:
     """Return the SavvyCAN CLI's own --help: the authoritative, always-current list of
-    connection types, serialbus drivers, and every option, straight from the binary."""
-    _, lines, _ = _run(["--help"], timeout=10, want_frames=False)
-    return {"help": "\n".join(lines)}
+    connection types, serialbus drivers, and every option, straight from the binary.
+    Also reports which builds exist (bin\\x86, bin\\x64) and when to use each."""
+    _, lines, _ = _run(["--help"], timeout=10, want_frames=False, arch=arch)
+    return {
+        "help": "\n".join(lines),
+        "builds": {a: str(_exe(a)) for a in ("x86", "x64") if _exe(a).exists()},
+        "arch_rule": "x86 for J2534/passthrucan adapters with 32-bit vendor DLLs (XHorse, "
+                     "clone MVCI) and for all adapters without a vendor DLL (lawicel, gvret, "
+                     "socketcand, mqtt, canserver); x64 only for 64-bit vendor DLLs.",
+    }
 
 
 @mcp.tool()

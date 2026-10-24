@@ -46,7 +46,11 @@ SavvyCAN.pro.qtds
 .xcode
 SavvyCAN.xcodeproj
 
-# Local 32-bit build output and plugin/mcp artifacts
+# Local Windows build output (build-win.cmd), release folder, plugin/mcp artifacts
 build-win32/
-win32-passthrucan/out/
+build-win64/
+build-linux/
+bin/
+src/plugins/passthrucan/build-*/
+src/plugins/passthrucan/out/
 __pycache__/

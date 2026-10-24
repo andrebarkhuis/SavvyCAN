@@ -12,8 +12,15 @@ presses it. That difference is the whole method, and it does not depend on preci
 
 ## Tools
 
-Capture with the **SavvyCAN CLI** (headless, in `build-win32\deploy\SavvyCAN.exe`); analyse
-with `workspace\toggle_finder.py`.
+Capture with the **SavvyCAN CLI** (headless; the `savvycan` MCP server wraps it, or run it
+directly); analyse with `workspace\toggle_finder.py`.
+
+- **Which build:** `build-win.cmd` produces `bin\x86\SavvyCAN.exe` and `bin\x64\SavvyCAN.exe`.
+  A vendor driver DLL only loads into a process of the same bitness, so use **x86** for a
+  J2534 / `passthrucan` adapter with a 32-bit DLL (XHorse, clone MVCI) and for every adapter
+  that has no vendor DLL (CANable/slcan, GVRET, socketcand, MQTT). Use **x64** only when the
+  adapter's vendor DLL is 64-bit. The MCP tools take this as the `arch` argument (default
+  x86); `connection_help` lists which builds exist.
 
 - Capture to the native CSV that the analyser reads:
   `SavvyCAN.exe --cli --port COM8 --speed 500000 --listen-only --count 400 --output cap.csv --format csv`

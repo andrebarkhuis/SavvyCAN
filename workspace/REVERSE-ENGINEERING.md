@@ -15,8 +15,9 @@ CAN frames so an ESP32 gateway can generate them.
 
 ## Tools
 
-Capture is now done with the **SavvyCAN CLI** (`build-win32\deploy\SavvyCAN.exe --cli`,
-headless), which writes the native CSV the analyser reads, e.g.:
+Capture is now done with the **SavvyCAN CLI** (`bin\x86\SavvyCAN.exe --cli`, headless;
+the 32-bit build, because the XHorse J2534 DLL is 32-bit), which writes the native CSV the
+analyser reads, e.g.:
 
 ```sh
 SavvyCAN.exe --cli --port COM8 --speed 500000 --listen-only --count 400 --output cap.csv --format csv
@@ -51,7 +52,7 @@ Capture procedure that worked:
 
 - The XHorse MVCI (a clone J2534) returns **no frames** if the channel is opened with
   CAN_ID_BOTH; it must be opened 11-bit only. (This is also why SavvyCAN's stock passthru
-  plugin saw nothing — see `../win32-passthrucan/`.)
+  plugin saw nothing — see `../src/plugins/passthrucan/`.)
 - It delivers only ~31 frames/s regardless of the FTDI latency timer, and accepts a single
   filter interpreted as a contiguous ID range. Fast frames therefore had to be captured a
   range at a time.

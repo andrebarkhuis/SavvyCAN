@@ -2,8 +2,23 @@
 
 An MCP server that lets an agent drive the SavvyCAN CLI: list serial ports, capture
 CAN frames, send a frame, and rank which bits change like a toggled switch. It is a thin
-wrapper over `build-win32\deploy\SavvyCAN.exe --cli` — see the scope contract at the top of
+wrapper over `bin\<arch>\SavvyCAN.exe --cli` — see the scope contract at the top of
 `server.py` before adding anything.
+
+### Which build it runs
+
+`build-win.cmd` produces two builds, `bin\x86\SavvyCAN.exe` and `bin\x64\SavvyCAN.exe`.
+`capture`, `send_frame` and `connection_help` take an `arch` argument (`x86` default, or
+`x64`). The rule: a vendor driver DLL can only be loaded by a process of the same bitness.
+
+| Adapter | `arch` |
+|---|---|
+| J2534 / `passthrucan` with a 32-bit vendor DLL (XHorse, clone MVCI) | `x86` |
+| lawicel / slcan (CANable), gvret, socketcand, mqtt, canserver (no vendor DLL) | `x86` (either works) |
+| `serialbus` driver whose vendor DLL is 64-bit (e.g. 64-bit PCANBasic) | `x64` |
+
+`connection_help` also returns which builds exist and this rule, so an agent can check
+before capturing.
 
 ## Tools
 
@@ -26,7 +41,8 @@ the binary's own `--help` — the single source of truth, so it never drifts fro
 
 ## Requirements
 
-- The SavvyCAN CLI built at `build-win32\deploy\SavvyCAN.exe` (or set `SAVVYCAN_EXE`).
+- The SavvyCAN builds at `bin\x86\SavvyCAN.exe` and/or `bin\x64\SavvyCAN.exe`
+  (`build-win.cmd`; `SAVVYCAN_EXE` overrides the path for testing).
 - Python with the MCP SDK: `pip install mcp`.
 
 ## Register
