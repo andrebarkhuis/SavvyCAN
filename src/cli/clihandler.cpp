@@ -78,6 +78,10 @@ bool CLIHandler::start()
         connect(mConnection, &CANConnection::debugOutput,
                 this, &CLIHandler::connDebug);
 
+        // Absolute host time (microseconds since the epoch) unless --device-time: J2534
+        // passthru adapters such as the XHorse MVCI report no usable timestamp of their own.
+        mConnection->setForceSystemTime(!mSettings.deviceTime);
+
         manager->add(mConnection);
         mConnection->start();
         mConnection->setBusSettings(0, bus);
@@ -92,6 +96,16 @@ bool CLIHandler::start()
         if (mSettings.listenOnly) {
             fprintf(stdout, "Listen-only mode enabled\n");
             fflush(stdout);
+        }
+
+        if (mSettings.durationSec > 0) {
+            fprintf(stdout, "Capturing for %d s\n", mSettings.durationSec);
+            fflush(stdout);
+            QTimer::singleShot(mSettings.durationSec * 1000, this, [this]() {
+                fprintf(stdout, "Reached duration limit (%d s)\n", mSettings.durationSec);
+                fflush(stdout);
+                shutdown();
+            });
         }
     } else if (mSettings.playbackFile.isEmpty()) {
         fprintf(stderr, "Error: --port or --playback is required in CLI mode\n");
@@ -109,8 +123,17 @@ bool CLIHandler::start()
     }
 
     if (!mSettings.outputFile.isEmpty()) {
-        fprintf(stdout, "Output file: %s (format: %s)\n",
-                qPrintable(mSettings.outputFile), qPrintable(mSettings.outputFormat));
+        if (mSettings.outputFormat.toLower() == "csv") {
+            // SavvyCAN's own continuous log (same code the GUI's "continuous logging" uses)
+            if (!FrameFileIO::openContinuousNative(mSettings.outputFile)) {
+                fprintf(stderr, "Error: cannot open output file %s\n", qPrintable(mSettings.outputFile));
+                return false;
+            }
+            mStreaming = true;
+        }
+        fprintf(stdout, "Output file: %s (format: %s, %s)\n",
+                qPrintable(mSettings.outputFile), qPrintable(mSettings.outputFormat),
+                mStreaming ? "written as frames arrive" : "written at exit");
         fflush(stdout);
     }
 
@@ -188,6 +211,9 @@ void CLIHandler::setupPlayback()
 
 void CLIHandler::shutdown()
 {
+    if (mShuttingDown) return;      // count limit, duration limit and Ctrl+C can all fire
+    mShuttingDown = true;
+
     fprintf(stdout, "\nShutting down...\n");
     fflush(stdout);
 
@@ -195,7 +221,12 @@ void CLIHandler::shutdown()
         mPlaybackObject->stopPlayback();
     }
 
-    if (!mSettings.outputFile.isEmpty() && !mCapturedFrames.isEmpty()) {
+    if (mStreaming) {
+        FrameFileIO::flushContinuousNative();
+        FrameFileIO::closeContinuousNative();
+        fprintf(stdout, "Wrote %d frames to %s\n", mWrittenCount, qPrintable(mSettings.outputFile));
+        fflush(stdout);
+    } else if (!mSettings.outputFile.isEmpty() && !mCapturedFrames.isEmpty()) {
         saveToFile();
     }
 
@@ -229,10 +260,18 @@ void CLIHandler::framesReceived(CANConnection* conn, QVector<CANFrame>& frames)
 {
     Q_UNUSED(conn);
 
-    for (const CANFrame &frame : frames) {
-        printFrame(frame);
+    if (mShuttingDown) return;
 
-        if (!mSettings.outputFile.isEmpty()) {
+    if (mStreaming) {
+        FrameFileIO::writeContinuousNative(&frames, 0);
+        FrameFileIO::flushContinuousNative();
+        mWrittenCount += frames.size();
+    }
+
+    for (const CANFrame &frame : frames) {
+        if (!mSettings.quiet) printFrame(frame);
+
+        if (!mStreaming && !mSettings.outputFile.isEmpty()) {
             mCapturedFrames.append(frame);
         }
 

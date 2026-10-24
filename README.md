@@ -184,6 +184,11 @@ Options:
   -f, --format <format>  Output format: csv, crtd, candump (default: csv)
   --listen-only          Enable listen-only mode
   -c, --count <count>    Stop after N frames (default: unlimited)
+  --duration <seconds>   Stop after N seconds (default: unlimited). csv output is
+                         written as frames arrive, so a crash keeps what was captured
+  -q, --quiet            Do not print every frame; only status lines
+  --device-time          Keep the adapter's own frame timestamps instead of host
+                         time (microseconds since epoch)
   --isotp-listen         Enable ISO-TP message reassembly
   --isotp-send <frame>   Send ISO-TP message (ID#HEXDATA)
   --isotp-extended       Use ISO-TP extended addressing
@@ -196,6 +201,14 @@ Options:
   --playback-bus <n>     Send on bus N (-1=all, -2=from file, default: 0)
   --playback-loop <n>    Loop N times (-1=infinite, default: 1)
 ```
+
+### Logging a whole session (cold start) through the XHorse
+
+The XHorse / clone MVCI driver crashes after roughly a minute of an open channel, so a
+single long capture is impossible. `log-session.cmd <name>` runs the 32-bit CLI in 45 s
+chunks, each streamed to `workspace\logs\<name>\chunk-NNN.csv` with host timestamps, and
+restarts around the crash; `log-session.cmd merge <name>` joins the chunks. Start it before
+turning the ignition on. The `/savvy-log-session` skill has the full procedure.
 
 ## Dependencies and building
 

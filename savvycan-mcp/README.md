@@ -25,7 +25,7 @@ before capturing.
 | Tool | What it does |
 |------|--------------|
 | `list_serial_ports` | List COM ports, to find a CANable/slcan adapter (e.g. COM8). |
-| `capture` | Capture frames (`port`, `speed`, `adapter`, `driver`, `serial_speed`, `count`, `timeout_s`, `listen_only`, `output_csv`) and return them. Listen-only by default. |
+| `capture` | Capture frames (`port`, `speed`, `adapter`, `driver`, `serial_speed`, `count`, `duration_s`, `timeout_s`, `listen_only`, `output_csv`, `arch`) and return them. Listen-only by default; `duration_s` ends the run cleanly, and `output_csv` is written as frames arrive. For a whole drive use `log-session.cmd`, not this tool. |
 | `send_frame` | Transmit one frame `ID#HEXDATA` (`adapter`/`driver` too). Writes to a live bus. |
 | `connection_help` | Return the CLI's own `--help`: the authoritative connection types, drivers and options. |
 | `analyze_capture` | Run `workspace/toggle_finder.py` on a captured CSV: `presses` to rank toggle bits, or `inspect_id` to dump one ID's byte history. |
@@ -62,4 +62,4 @@ Run it standalone (stdio) for testing: `python savvycan-mcp\server.py`.
 2. `capture` with `port=COM8, count=400, output_csv=cap.csv` while toggling a switch.
 3. `analyze_capture` with `csv_path=cap.csv, presses=3` → ranked candidate bits.
 
-Captures and the analyser live in `../workspace`; the method is the `can-signal-finder` skill.
+Captures and the analyser live in `../workspace`; the method is the `savvy-can-signal-finder` skill.

@@ -51,6 +51,15 @@ public:
     int getNumBuses() const;
 
     /**
+     * @brief setForceSystemTime
+     * @param pForce: stamp received frames with the host clock (microseconds since the
+     * epoch) regardless of the Main/TimeClock setting. Call before start(). Used by the
+     * CLI so logs carry absolute time even from adapters whose own timestamps are
+     * unusable (e.g. J2534 passthru devices that report 0).
+     */
+    void setForceSystemTime(bool pForce);
+
+    /**
      * @brief getPort
      * @return returns the port name of the device
      */
@@ -260,6 +269,7 @@ protected:
 
 protected:
     bool useSystemTime;
+    bool mForceSystemTime = false;
 
     /**************************************************************/
     /***********     protected interface to implement       *******/

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(~/.claude/projects/C--projects-SavvyCAN/memory/**)",
+      "Edit(~/.claude/projects/C--projects-SavvyCAN/memory/**)",
+      "Read(~/AppData/Local/Temp/claude/**)",
+      "Edit(~/AppData/Local/Temp/claude/**)"
+    ]
+  },
+  "autoMemoryEnabled": false
+}

@@ -95,16 +95,20 @@ def list_serial_ports() -> dict:
 def capture(port: str, speed: int = 500000, adapter: Adapter = "lawicel",
             driver: str = "", serial_speed: int = 115200,
             count: int = 200, timeout_s: float = 20, listen_only: bool = True,
-            output_csv: str = "", arch: Arch = "x86") -> dict:
+            output_csv: str = "", duration_s: int = 0, arch: Arch = "x86") -> dict:
     """Capture CAN frames from an adapter and return them.
 
     port: e.g. COM8, or can0 for socketcan. speed: bus bitrate, default 500000.
     adapter: lawicel (CANable/slcan over a COM port, default), gvret, kayak, mqtt,
     canserver, or serialbus. driver: required for serialbus — the Qt plugin, e.g.
     socketcan, peakcan, passthrucan, virtualcan. serial_speed: LAWICEL serial baud
-    (default 115200). count: stop after this many frames. timeout_s: give up waiting
-    after this long, returning whatever arrived. listen_only: never transmit (default
-    true). output_csv: also save a SavvyCAN native CSV here (for analyze_capture).
+    (default 115200). count: stop after this many frames. duration_s: stop after this
+    many seconds (the CLI exits cleanly and the file is complete; prefer this over
+    timeout_s for timed captures; keep it under ~45 s on the XHorse, whose DLL crashes
+    after roughly a minute). timeout_s: hard limit after which the process is killed,
+    returning whatever arrived. listen_only: never transmit (default true).
+    output_csv: also save a SavvyCAN native CSV here (for analyze_capture); it is
+    written frame by frame, so even a crash keeps what was captured.
     arch: which build runs — x86 (default) works for every adapter without a vendor
     DLL and for J2534/passthrucan devices with 32-bit DLLs (XHorse, clone MVCI);
     use x64 only when the adapter's vendor DLL is 64-bit (the DLL and the process
@@ -113,6 +117,9 @@ def capture(port: str, speed: int = 500000, adapter: Adapter = "lawicel",
     args = ["--type", adapter, "--port", port, "--speed", str(speed), "--count", str(count)]
     if driver:
         args += ["--driver", driver]
+    if duration_s > 0:
+        args += ["--duration", str(duration_s)]
+        timeout_s = max(timeout_s, duration_s + 15)
     if adapter == "lawicel":
         args += ["--serial-speed", str(serial_speed)]
     if listen_only:

@@ -78,14 +78,16 @@ void CANConnection::start()
 
     QSettings settings;
 
-    if (settings.value("Main/TimeClock", false).toBool())
-    {
-        useSystemTime = true;
-    }
-    else useSystemTime = false;
+    useSystemTime = mForceSystemTime || settings.value("Main/TimeClock", false).toBool();
 
     /* in multithread case, this will be called before entering thread event loop */
     return piStarted();
+}
+
+void CANConnection::setForceSystemTime(bool pForce)
+{
+    mForceSystemTime = pForce;
+    if (pForce) useSystemTime = true;
 }
 
 

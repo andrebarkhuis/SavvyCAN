@@ -116,5 +116,5 @@ python -I workspace/toggle_finder.py out.csv --presses 3
 python -I workspace/toggle_finder.py out.csv --id 59D     # inspect a candidate
 ```
 
-See `../.claude/skills/can-signal-finder/` for the workflow as a reusable skill, and
+See `../.claude/skills/savvy-can-signal-finder/` for the workflow as a reusable skill, and
 `isf-drivemode-can-spec.md` for the gateway-ready message list.

@@ -69,6 +69,9 @@ if exist "%OUT%" echo Cannot replace %OUT% - close any SavvyCAN.exe running from
 if exist "%OUT%" exit /b 1
 mkdir "%OUT%" || exit /b 1
 copy /y "%BUILD%\release\SavvyCAN.exe" "%OUT%\" >nul || exit /b 1
+REM The copy in build-winXX\release has no Qt DLLs beside it and cannot run; remove it so
+REM the only SavvyCAN.exe files on disk are the runnable ones in bin\. nmake relinks it next time.
+del /q "%BUILD%\release\SavvyCAN.exe"
 windeployqt --release --no-translations --no-opengl-sw "%OUT%\SavvyCAN.exe" || exit /b 1
 copy /y "%SRC%src\plugins\passthrucan\out\%ARCH%\qtpassthrucanbus.dll" "%OUT%\canbus\" >nul || exit /b 1
 xcopy /e /i /y /q "%SRC%help" "%OUT%\help" >nul

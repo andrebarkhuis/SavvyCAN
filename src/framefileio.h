@@ -95,7 +95,8 @@ public:
     static bool saveCanalyzerASC(QString filename, const QVector<CANFrame>* frames);
     static bool saveCARBUSAnalzyer(QString filename, const QVector<CANFrame>* frames);
 
-    static bool openContinuousNative();
+    static bool openContinuousNative();                       // asks the user for a file (GUI)
+    static bool openContinuousNative(const QString &filename); // opens the given file (GUI and CLI)
     static bool closeContinuousNative();
     static bool writeContinuousNative(const QVector<CANFrame>*, int);
     static bool flushContinuousNative();

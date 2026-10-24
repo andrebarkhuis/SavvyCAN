@@ -54,3 +54,6 @@ bin/
 src/plugins/passthrucan/build-*/
 src/plugins/passthrucan/out/
 __pycache__/
+
+# Session logs written by log-session.cmd (keep curated captures in workspace/ itself)
+workspace/logs/

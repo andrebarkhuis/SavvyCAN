@@ -179,3 +179,4 @@ the `continuous` pre-release.
 | `'build-win.cmd' is not recognized` from Git Bash | run `cmd //c C:\projects\SavvyCAN\build-win.cmd` |
 | adapter opens but no frames with a clone J2534 device | that is what the passthrucan patch fixes; make sure `bin\<arch>\canbus\qtpassthrucanbus.dll` is the patched one (rebuild) |
 | 32-bit vendor DLL will not load | you are running `bin\x64`; use `bin\x86` |
+| "Qt5Core.dll was not found" at launch | you started a bare compiler output instead of `bin\<arch>\SavvyCAN.exe`; `build-win.cmd` now deletes `build-winXX\release\SavvyCAN.exe` after copying it to `bin\` so only runnable copies remain |

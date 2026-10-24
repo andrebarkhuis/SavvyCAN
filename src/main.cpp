@@ -84,6 +84,9 @@ static int runCli(int argc, char *argv[])
     parser.addOption(QCommandLineOption(QStringList() << "f" << "format", "Output format: csv, crtd, candump (default: csv)", "format", "csv"));
     parser.addOption(QCommandLineOption(QStringList() << "listen-only", "Enable listen-only mode"));
     parser.addOption(QCommandLineOption(QStringList() << "c" << "count", "Stop after N frames (default: unlimited)", "count"));
+    parser.addOption(QCommandLineOption(QStringList() << "duration", "Stop after N seconds (default: unlimited). csv output is written as frames arrive, so a crash keeps what was captured", "seconds"));
+    parser.addOption(QCommandLineOption(QStringList() << "q" << "quiet", "Do not print every frame; only status lines"));
+    parser.addOption(QCommandLineOption(QStringList() << "device-time", "Keep the adapter's own frame timestamps instead of host time (microseconds since epoch)"));
     // ISO-TP options
     parser.addOption(QCommandLineOption(QStringList() << "isotp-listen", "Enable ISO-TP message reassembly"));
     parser.addOption(QCommandLineOption(QStringList() << "isotp-send", "Send ISO-TP message (ID#HEXDATA)", "frame"));
@@ -130,6 +133,15 @@ static int runCli(int argc, char *argv[])
     if (parser.isSet("count")) {
         settings.frameCount = parser.value("count").toInt();
     }
+    if (parser.isSet("duration")) {
+        settings.durationSec = parser.value("duration").toInt();
+        if (settings.durationSec <= 0) {
+            fprintf(stderr, "Error: --duration must be a positive number of seconds\n");
+            return 1;
+        }
+    }
+    settings.quiet = parser.isSet("quiet");
+    settings.deviceTime = parser.isSet("device-time");
 
     // ISO-TP settings
     settings.isotpListen = parser.isSet("isotp-listen");

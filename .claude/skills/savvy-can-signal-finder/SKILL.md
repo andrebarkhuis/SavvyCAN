@@ -1,5 +1,5 @@
 ---
-name: can-signal-finder
+name: savvy-can-signal-finder
 description: Capture CAN bus traffic and find which frame, byte and bit carries a signal the user can change — a switch, mode, button, door, light, pedal or any state they can toggle or vary. Use this whenever the user wants to sniff, log, reverse engineer or "find the packet/ID for" something on a vehicle or any CAN bus, asks which message a feature lives in, or wants a DBC signal for a control, on any car and through any adapter the SavvyCAN CLI supports (CANable/slcan, GVRET, SocketCAN, or a J2534 passthru device via the serialbus plugin). Also use it when a CAN tool shows no frames from an adapter.
 ---
 

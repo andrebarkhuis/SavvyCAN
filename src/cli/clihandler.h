@@ -25,6 +25,9 @@ public:
         QString outputFile;
         QString outputFormat = "csv";
         int frameCount = -1;
+        int durationSec = 0;        // stop after this many seconds (0 = no limit)
+        bool quiet = false;         // do not print every frame to stdout
+        bool deviceTime = false;    // keep adapter timestamps instead of the host clock
         QStringList sendFrames;
         // ISO-TP
         bool isotpListen = false;
@@ -75,9 +78,15 @@ private:
     Settings mSettings;
     CANConnection *mConnection = nullptr;
     QVector<CANFrame> mCapturedFrames;
+    // csv output uses SavvyCAN's continuous native log (FrameFileIO::*ContinuousNative):
+    // frames are written and flushed as they arrive, so a crash (e.g. inside a vendor
+    // J2534 DLL) loses nothing already received. Other formats are saved at shutdown.
+    bool mStreaming = false;
+    int mWrittenCount = 0;
     int mReceivedCount = 0;
     bool mConnected = false;
     bool mFramesSent = false;
+    bool mShuttingDown = false;
 
     // ISO-TP / UDS
     ISOTP_HANDLER *mISOTPHandler = nullptr;

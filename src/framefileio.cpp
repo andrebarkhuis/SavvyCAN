@@ -2163,18 +2163,24 @@ bool FrameFileIO::openContinuousNative()
     if (dialog.exec() == QDialog::Accepted)
     {
         filename = dialog.selectedFiles()[0];
-        continuousFile.setFileName(filename);
-
-        if (!continuousFile.open(QIODevice::WriteOnly | QIODevice::Text))
-        {
-            return false;
-        }
-        continuousFile.write("Time Stamp,ID,Extended,Dir,Bus,LEN,D1,D2,D3,D4,D5,D6,D7,D8");
-        continuousFile.write("\n");
+        if (!openContinuousNative(filename)) return false;
         settings.setValue("FileIO/LoadSaveDirectory", dialog.directory().path());
         return true;
     }
     return false;
+}
+
+bool FrameFileIO::openContinuousNative(const QString &filename)
+{
+    continuousFile.setFileName(filename);
+
+    if (!continuousFile.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        return false;
+    }
+    continuousFile.write("Time Stamp,ID,Extended,Dir,Bus,LEN,D1,D2,D3,D4,D5,D6,D7,D8");
+    continuousFile.write("\n");
+    return true;
 }
 
 bool FrameFileIO::closeContinuousNative()

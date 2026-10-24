@@ -4,8 +4,10 @@
 > Every file you create, every helper, every log and every build artifact lives inside
 > this repo (`bin\`, `build-win32\`, `build-win64\` for generated output). Edit files
 > directly with the editing tools; never write a helper script somewhere else to do it.
-> The only scripts are `build-win.cmd` and `clean.cmd` in the repo root plus
-> `src\plugins\passthrucan\build-plugin.cmd`. Extend those; do not add new ones.
+> The only scripts are `build-win.cmd`, `clean.cmd` and `log-session.cmd` in the repo
+> root plus `src\plugins\passthrucan\build-plugin.cmd`. Extend those; do not add new ones.
+> Logging, file formats and connections are SavvyCAN's own code (`FrameFileIO`,
+> `connections\`); never re-implement them in the CLI, scripts or the MCP server.
 
 Fork of SavvyCAN with a CLI mode, an MCP server, a CAN reverse-engineering workspace and
 Windows 32-bit + 64-bit release builds. The 32-bit build exists so that 32-bit vendor
@@ -22,12 +24,12 @@ process of the same bitness.
 - `build-win.cmd` is the only Windows build script. `build-win.cmd` builds both
   architectures, `build-win.cmd x86` / `build-win.cmd x64` one of them.
   `BUILD.md` is the authoritative build and dependency document (Windows x86, Windows
-  x64, Linux); the `/build` skill (`.claude\skills\build\SKILL.md`) is the short
-  operational version of it. Keep the two in sync.
+  x64, Linux); the `/savvy-build` skill (`.claude\skills\savvy-build\SKILL.md`) is the
+  short operational version of it. Keep the two in sync.
 - `bin\x86\` and `bin\x64\` are the self-contained release folders (exe, Qt DLLs,
   plugins, help, examples). Gitignored.
 - `build-win32\` and `build-win64\` hold intermediate build files only. Gitignored.
-- The MCP server (`savvycan-mcp`) and the can-signal-finder skill run
+- The MCP server (`savvycan-mcp`) and the savvy-can-signal-finder skill run
   `bin\<arch>\SavvyCAN.exe --cli`. Rule for `arch`: x86 for J2534/passthrucan adapters
   with 32-bit vendor DLLs (XHorse, clone MVCI) and for adapters without a vendor DLL;
   x64 only for 64-bit vendor DLLs. `connection_help` reports which builds exist.
@@ -37,6 +39,13 @@ process of the same bitness.
   Visual Studio 2026's STL removed `stdext::make_checked_array_iterator`, which Qt 5.15
   headers still use.
 - `savvycan-mcp\`, `workspace\`, `.claude\skills\` are the reverse-engineering tooling.
+  Project skills are prefixed `savvy-`: `/savvy-build` (build and clean),
+  `/savvy-debug-crash` (why a SavvyCAN process died or hung: event log, minidumps, known
+  XHorse `MVCI32.dll` crash), `/savvy-log-session` (chunked cold-start logging),
+  `/savvy-can-signal-finder` (find the frame and bit for a control).
+- Known: the XHorse / clone MVCI J2534 driver (`MVCI32.dll`) crashes with an access
+  violation after roughly 60-90 s of an open channel. Not fixable in SavvyCAN; keep CLI
+  sessions short or add a periodic reconnect to `src\plugins\passthrucan`.
 - `.github\workflows\build.yml` builds the same x86 and x64 Windows packages in CI.
 
 ## Toolchain (local machine)
@@ -49,7 +58,11 @@ process of the same bitness.
 
 - Everything the build produces stays inside this repo (`bin\`, `build-win32\`,
   `build-win64\`). Do not build or stage output in temp directories.
-- Do not add more scripts; extend `build-win.cmd` or `clean.cmd`.
+- Do not add more scripts; extend `build-win.cmd`, `clean.cmd` or `log-session.cmd`.
+- `log-session.cmd <name>` logs a whole drive through the XHorse in 45 s chunks to
+  `workspace\logs\<name>\` (gitignored), restarting around the DLL crash; the `/savvy-log-session`
+  skill has the cold-start procedure. The CLI's `--duration`, `--quiet` and streaming csv
+  output exist for it; csv streaming is `FrameFileIO`'s continuous native log.
 - A clean build is `clean.cmd` followed by `build-win.cmd`. Do that after touching
   `SavvyCAN.pro`, moving files or changing the toolchain.
 - Check `git status` before and after: build output must stay gitignored.
